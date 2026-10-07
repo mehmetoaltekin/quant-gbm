@@ -6,14 +6,14 @@ Monte Carlo risk simulation for any asset under three models:
 
 1. **GBM** with normal shocks, the textbook baseline.
 2. **GBM with Student-t shocks**, the same volatility but with fat tails.
-3. **Regime-switching GBM**, driven by a Gaussian HMM.
+3. **Regime switching GBM**, driven by a Gaussian HMM.
 
 Each model produces **VaR, CVaR, a drawdown distribution and percentile bands**. The project then asks the question most GBM demos skip: *does the predicted tail hold up out of sample?* It answers with a walk-forward VaR backtest scored by the Kupiec and Christoffersen tests.
 
 The regime layer follows the methodology of [hmm-regime-detection](https://github.com/mehmetoaltekin/hmm-regime-detection):
 
-- States are sorted by variance, so state 0 is always the lowest-volatility regime.
-- The current regime comes from forward-filtered probabilities only, never from smoothed ones.
+- States are sorted by variance, so state 0 is always the lowest volatility regime.
+- The current regime comes from forward filtered probabilities only, never from smoothed ones.
 - The number of states is chosen by BIC.
 
 > Research use only. Nothing here is financial or investment advice.
@@ -26,15 +26,15 @@ The regime layer follows the methodology of [hmm-regime-detection](https://githu
 
 $$dS_t = \mu S_t\,dt + \sigma S_t\,dW_t,$$
 
-simulated with the exact log-space discretisation
+simulated with the exact log space discretisation
 
 $$\ln\frac{S_{t+\Delta t}}{S_t} = \left(\mu - \tfrac{1}{2}\sigma^2\right)\Delta t + \sigma\sqrt{\Delta t}\,Z.$$
 
 Since $\mathbb{E}[\ln(S_{t+\Delta t}/S_t)] = (\mu - \sigma^2/2)\Delta t$, the arithmetic drift is estimated as $\hat\mu = \bar r \cdot N + \hat\sigma^2/2$, where $N$ is the number of periods per year.
 
-**Fat-tail variant.** $Z$ is replaced by a Student-t variable rescaled to unit variance. Volatility stays the same and only the tails get heavier.
+**Fat tail variant.** $Z$ is replaced by a Student-t variable rescaled to unit variance. Volatility stays the same and only the tails get heavier.
 
-**Regime-switching GBM.** A $K$-state Gaussian HMM is fitted to log returns:
+**Regime switching GBM.** A $K$-state Gaussian HMM is fitted to log returns:
 
 $$P(S_t = j \mid S_{t-1} = i) = A_{ij}, \qquad r_t \mid S_t = k \sim \mathcal{N}(m_k, s_k^2).$$
 
@@ -46,7 +46,7 @@ Each simulated path then works as follows:
 
 Regime persistence, switching and the resulting volatility clustering are therefore part of the simulated distribution.
 
-**Validation.** At every forecast origin, each model is re-estimated on the trailing window only. It forecasts the $h$-bar VaR, which is compared with the realised return. Origins do not overlap, so breaches are approximately independent. Two tests score the result:
+**Validation.** At every forecast origin, each model is re estimated on the trailing window only. It forecasts the $h$-bar VaR, which is compared with the realised return. Origins do not overlap, so breaches are approximately independent. Two tests score the result:
 
 - **Kupiec POF** tests whether the breach rate equals $\alpha$.
 - **Christoffersen** tests whether breaches cluster.
@@ -78,12 +78,12 @@ Run `quant-gbm --help` to see every option. Results go to `outputs/` by default:
 |---|---|
 | `REPORT.md` | Full write-up with every table filled from your run |
 | `risk_comparison.csv` | VaR / CVaR / drawdown / percentiles per model |
-| `model_selection.csv` | Log-likelihood, AIC, BIC for K = 1..4 |
-| `regime_parameters.csv` | Per-regime volatility, drift, persistence, expected duration |
+| `model_selection.csv` | Log likelihood, AIC, BIC for K = 1..4 |
+| `regime_parameters.csv` | Per regime volatility, drift, persistence, expected duration |
 | `filtered_probabilities.csv` | Daily filtered regime probabilities |
-| `backtest_*.csv`, `backtest_evaluation.csv` | Out-of-sample VaR forecasts and test statistics |
+| `backtest_*.csv`, `backtest_evaluation.csv` | Out of sample VaR forecasts and test statistics |
 | `fan_gbm.png`, `fan_regime.png` | Simulated paths with percentile bands |
-| `terminal_distributions.png` | Horizon-return distribution, all models overlaid |
+| `terminal_distributions.png` | Horizon return distribution, all models overlaid |
 | `regimes.png` | Price coloured by filtered regime |
 | `var_backtest.png` | VaR forecasts against realised returns, with breaches marked |
 
@@ -112,7 +112,7 @@ print(evaluate(bt, alpha=0.05))
 
 ### CSV input
 
-Any CSV with a date column and a `close` column works. The delimiter is detected automatically, and MetaTrader 5 exports (`<DATE> <TIME> ... <CLOSE>`, tab-separated) are read directly. To use a different price column, pass `column=` in Python.
+Any CSV with a date column and a `close` column works. The delimiter is detected automatically, and MetaTrader 5 exports (`<DATE> <TIME> ... <CLOSE>`, tab separated) are read directly. To use a different price column, pass `column=` in Python.
 
 ## 4. Worked example: XAUUSD
 
@@ -125,16 +125,16 @@ Yahoo's spot symbol `XAUUSD=X` has frequent gaps and stale quotes. COMEX gold fu
 
 ## 5. Reading the results
 
-- **Horizon matters.** At a 1-year horizon, the three models often give similar terminal distributions, because summing many daily shocks pulls them toward normality. The fat-tail and regime effects show most clearly at short horizons (`--horizon 21`), in the drawdown statistics, and when the series currently sits in a high-volatility regime.
-- **Starting state matters.** The regime model starts from today's filtered probabilities. Its forecast therefore depends on current market conditions, while constant-parameter GBM gives the same forecast in any market.
+- **Horizon matters.** At a 1 year horizon, the three models often give similar terminal distributions, because summing many daily shocks pulls them toward normality. The fat tail and regime effects show most clearly at short horizons (`--horizon 21`), in the drawdown statistics, and when the series currently sits in a high volatility regime.
+- **Starting state matters.** The regime model starts from today's filtered probabilities. Its forecast therefore depends on current market conditions, while constant parameter GBM gives the same forecast in any market.
 - **Trust the backtest over the fan chart.** Section 4 of the report shows what a model *implies*. Section 5 shows whether those implications held on unseen data.
 
 ## 6. Limitations
 
-- **In-sample fit.** The headline simulation uses parameters fitted on the full sample. Only the VaR backtest is strictly out of sample.
+- **In sample fit.** The headline simulation uses parameters fitted on the full sample. Only the VaR backtest is strictly out of sample.
 - **Gaussian emissions.** Within a regime, returns are still normal. Heavy tails come only from regime mixing, unless you use the Student-t variant.
-- **Constant transition matrix.** Regime switching is time-homogeneous and does not respond to macro variables.
-- **No jumps or event risk.** Overnight gaps, central-bank surprises and geopolitical shocks are not modelled explicitly.
+- **Constant transition matrix.** Regime switching is time homogeneous and does not respond to macro variables.
+- **No jumps or event risk.** Overnight gaps, central bank surprises and geopolitical shocks are not modelled explicitly.
 - **Drift uncertainty.** The standard error of an annual drift estimate is roughly $\sigma/\sqrt{T}$, which is about 4–5 percentage points over 10 years for gold. The simulated median is far less certain than the volatility.
 - **Local optima.** EM can converge to a local optimum. The code uses multiple random starts, but results can still depend on the seed.
 
