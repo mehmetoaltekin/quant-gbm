@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quant-gbm"
+version = "0.1.0"
+description = "GBM and HMM regime-switching Monte Carlo risk simulation with out-of-sample VaR backtesting."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Mehmet Altekin" }]
+requires-python = ">=3.9"
+dependencies = [
+    "numpy>=1.23",
+    "pandas>=1.5",
+    "scipy>=1.9",
+    "matplotlib>=3.6",
+    "hmmlearn>=0.3",
+    "yfinance>=0.2.40",
+    "tabulate>=0.9",
+]
+keywords = ["quantitative-finance", "monte-carlo", "gbm", "hidden-markov-model", "value-at-risk"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[project.scripts]
+quant-gbm = "quant_gbm.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/mehmetoaltekin/quant-gbm"
+"Regime detection" = "https://github.com/mehmetoaltekin/hmm-regime-detection"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
